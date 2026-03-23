@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-
+from fastapi import Response
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -113,15 +113,17 @@ async def get_game_moves(
 @router.delete(
     "/{game_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a game and all its data",
 )
 async def delete_game(
     game_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-) -> None:
+):
     result = await db.execute(select(Game).where(Game.id == game_id))
     game = result.scalar_one_or_none()
+
     if not game:
         raise HTTPException(status_code=404, detail="Game not found.")
+
     await db.delete(game)
     await db.commit()
+
